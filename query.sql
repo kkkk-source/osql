@@ -132,7 +132,7 @@ FROM (
     GROUP BY 
         city 
     HAVING 
-        COUNT(product_id) IN (SELECT COUNT(id) FROM sale)
+        COUNT(product_id) IN (SELECT COUNT(id) FROM product)
     );
 
 rem
