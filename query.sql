@@ -1,10 +1,9 @@
 rem [1]------------------------------------------------------------------------
 rem
 SELECT 
-    DISTINCT c.id 
+    id 
 FROM 
-    sale s INNER JOIN customer c 
-    ON s.customer_id = c.id 
+    customer 
 WHERE 
     city = 'Cali';
 
@@ -12,13 +11,12 @@ rem
 rem [2]------------------------------------------------------------------------
 rem
 SELECT 
-    p.id, 
-    p.description 
+    id, 
+    description 
 FROM 
-    sale s INNER JOIN product 
-    p ON s.product_id = p.id 
+    product 
 WHERE 
-    p.price < 1500;
+    price < 1500;
 
 rem
 rem [3]------------------------------------------------------------------------
@@ -63,7 +61,7 @@ FROM (
         customer_id, 
         c.name 
     HAVING 
-        COUNT(product_id) IN (SELECT COUNT(id) FROM sale)
+        COUNT(product_id) IN (SELECT COUNT(id) FROM product)
 );
 
 rem
