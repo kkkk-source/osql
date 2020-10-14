@@ -67,13 +67,15 @@ FROM (
 rem
 rem [6]------------------------------------------------------------------------
 rem
-SELECT 
-    customer_id, 
+SELECT
+    c.id,
+    c.name,
     SUM(amount)
-FROM 
-    sale 
-GROUP BY 
-    customer_id;
+FROM
+    sale s inner join customer c on s.customer_id = c.id
+GROUP BY
+    c.id,
+    c.name;
 
 rem
 rem [7]------------------------------------------------------------------------
