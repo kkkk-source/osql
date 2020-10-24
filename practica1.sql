@@ -1,4 +1,11 @@
+rem PRACTICA 1: CURSORES Y EXCEPCIONES
+rem
+rem  Cristian Camilo Serna Betancur
+rem     Elver Andres Arroyave
 rem 
+
+
+rem
 rem ** 1 ***********************
 rem 
 DECLARE
@@ -174,8 +181,7 @@ END;
 
 rem 
 rem ** 9 ***********************
-rem 
-rem Desde mi punto de vista son estos dos bloques (enunciado 7 y 8) 
+rem Desde nuestro punto de vista son estos dos bloques (enunciado 7 y 8) 
 rem los que necesitan hacer manejo de excepciones.
 rem
 
@@ -191,6 +197,7 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Hubo un error: ' || SQLERRM);
 END;
 /
+
 rem * 8 *
 DECLARE
     incr NUMBER;
