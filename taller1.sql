@@ -1,3 +1,45 @@
+
+rem ***************************************************************************
+rem Version 0.1
+rem This script creates the SQL-model. 
+rem ***************************************************************************
+rem 
+
+rem [!] The INT value has a stogare of 4 Bytes.
+rem [!] The lengths were taken from the stackoverflow thread:
+rem  +  List of standard lengths for database fields.
+rem
+
+CREATE TABLE customer (
+    id         INT PRIMARY KEY,
+    name       VARCHAR(50) NOT NULL,
+    address    VARCHAR(95),
+    telephone  VARCHAR(15),
+    city       VARCHAR(15)
+);
+
+CREATE TABLE product (
+    id           INT PRIMARY KEY,
+    description  VARCHAR(280),
+    price        DECIMAL(10, 2) NOT NULL
+);
+
+CREATE TABLE sale (
+    id           INT PRIMARY KEY,
+    amount       NUMBER(10) NOT NULL,
+    customer_id  INT NOT NULL,
+    product_id   INT NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customer(id),
+    FOREIGN KEY (product_id)  REFERENCES product(id)
+);
+
+rem
+rem References:
+rem [stackoverflow.com/questions/20958/list-of-standard-lengths-for-database-fields]
+rem [tutorialspoint.com/which-mysql-type-is-most-suitable-for-price-column]
+rem
+
+
 rem ***************************************************************************
 rem Version 0.1
 rem This script seeds the tables of the SQL-model with dummy/fake information. 
@@ -60,4 +102,148 @@ INSERT INTO sale (id, amount, customer_id, product_id) VALUES (20,10,6,13);
 rem
 rem References:
 rem This dummy information was taken from [https://www.generatedata.com]
+rem
+
+
+rem [1]------------------------------------------------------------------------
+rem
+SELECT 
+    id 
+FROM 
+    customer 
+WHERE 
+    city = 'Cali';
+
+rem
+rem [2]------------------------------------------------------------------------
+rem
+SELECT 
+    id, 
+    description 
+FROM 
+    product 
+WHERE 
+    price < 1500;
+
+rem
+rem [3]------------------------------------------------------------------------
+rem
+SELECT 
+    c.id, 
+    c.name, 
+    s.amount, 
+    p.description
+FROM 
+    product p INNER JOIN sale s ON p.id = s.product_id 
+    INNER JOIN customer c ON s.customer_id = c.id 
+WHERE 
+    s.amount > 10;
+
+rem
+rem [4]------------------------------------------------------------------------
+rem
+SELECT 
+    c.id, 
+    c.name 
+FROM 
+    customer c 
+WHERE 
+    c.id NOT IN (SELECT s.customer_id FROM sale s);
+
+rem
+rem [5]------------------------------------------------------------------------
+rem
+SELECT 
+    customer_id, 
+    name 
+FROM (
+    SELECT 
+        customer_id, 
+        c.name, 
+        COUNT(product_id)
+    FROM 
+        sale s INNER JOIN customer c 
+        ON s.customer_id = c.id 
+    GROUP BY 
+        customer_id, 
+        c.name 
+    HAVING 
+        COUNT(product_id) IN (SELECT COUNT(id) FROM product)
+);
+
+rem
+rem [6]------------------------------------------------------------------------
+rem
+SELECT
+    c.id,
+    c.name,
+    SUM(amount)
+FROM
+    sale s inner join customer c on s.customer_id = c.id
+GROUP BY
+    c.id,
+    c.name;
+
+rem
+rem [7]------------------------------------------------------------------------
+rem
+SELECT 
+    id 
+FROM 
+    product 
+WHERE 
+    id NOT IN (
+        SELECT 
+            product_id 
+        FROM 
+            customer c INNER JOIN sale s ON c.id = s.customer_id
+        WHERE c.city = 'Tunja'
+    );
+
+rem
+rem [8]------------------------------------------------------------------------
+rem
+SELECT 
+    id 
+FROM 
+    product 
+WHERE 
+    id IN (
+        SELECT 
+            product_id 
+        FROM 
+            customer c INNER JOIN sale s ON c.id = s.customer_id 
+            INNER JOIN product p ON p.id = s.product_id 
+        WHERE c.city = 'Medellin'
+    ) 
+    AND 
+    id IN (
+        SELECT 
+            product_id 
+        FROM 
+            customer c INNER JOIN sale s ON c.id = s.customer_id 
+            INNER JOIN product p ON p.id = s.product_id 
+        WHERE c.city = 'Bogota'
+    );
+
+rem
+rem [9]------------------------------------------------------------------------
+rem
+SELECT 
+    city 
+FROM (
+    SELECT 
+        city, 
+        COUNT(product_id) 
+    FROM 
+        customer c INNER JOIN sale s ON c.id = s.customer_id 
+        INNER JOIN product p ON p.id = s.product_id
+    GROUP BY 
+        city 
+    HAVING 
+        COUNT(product_id) IN (SELECT COUNT(id) FROM product)
+    );
+
+rem
+rem [END]
 rem
