@@ -181,10 +181,44 @@ END;
 
 rem 
 rem ** 9 ***********************
-rem Desde nuestro punto de vista son estos dos bloques (enunciado 7 y 8) 
-rem los que necesitan hacer manejo de excepciones.
 rem
+rem 
+rem * 5 *
+rem 
+DECLARE
+    CURSOR products IS
+    SELECT productor.nombre AS owner, COUNT(producto.nombre) AS amount
+    FROM productor INNER JOIN producto ON productor.id = productor_id
+    GROUP BY productor.nombre;
+BEGIN
+    FOR product IN products LOOP
+        DBMS_OUTPUT.PUT_LINE('productor: ' || product.owner || ' cantidad producida: ' || product.amount );
+    END LOOP;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('data not found: ' || SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('error: ' || SQLERRM);
+END;
+/
 
+rem 
+rem * 6 *
+rem 
+BEGIN
+    FOR products IN
+        (SELECT nombre FROM producto ORDER BY id)
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(products.nombre);
+    END LOOP;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('data not found: ' || SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('error: ' || SQLERRM);
+END;
+/
+rem 
 rem * 7 *
 BEGIN
     FOR products IN
@@ -194,10 +228,12 @@ BEGIN
     END LOOP;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('Hubo un error: ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('data not found: ' || SQLERRM);
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('error: ' || SQLERRM);
 END;
 /
-
+rem 
 rem * 8 *
 DECLARE
     incr NUMBER;
