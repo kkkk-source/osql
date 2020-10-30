@@ -1,3 +1,9 @@
+rem PRACTICA 2: PROCEDIMIENTOS ALMACENADOS
+rem
+rem  Cristian Camilo Serna Betancur
+rem     Elver Andres Arroyave
+rem 
+
 CREATE TABLE cliente (
     ced NUMBER(8) PRIMARY KEY,
     nom VARCHAR2(10) NOT NULL
