@@ -36,6 +36,8 @@ INSERT INTO gasto (cod_gasto, ced, valor_mensual, des_gasto) VALUES (2, 2, 0, 14
 INSERT INTO gasto (cod_gasto, ced, valor_mensual, des_gasto) VALUES (3, 3, 19332, 100);
 
 
+rem ******* 1 *******
+rem
 
 /* 
  * From our point of view it's no necessary to handle exceptional
@@ -62,7 +64,7 @@ RETURN NUMBER IS
     total NUMBER;
 BEGIN
     total := 0;
-    FOR empleo IN 
+    FOR empleo IN
         (SELECT valor_mensual FROM cliente INNER JOIN empleo 
             ON cliente.ced = empleo.ced WHERE cliente.ced = cliente_cc)
     LOOP
@@ -71,7 +73,6 @@ BEGIN
     RETURN total;
 END;
 /
-
 
 CREATE OR REPLACE FUNCTION substract (ingresos IN NUMBER, gastos IN NUMBER)
 RETURN NUMBER IS
@@ -82,12 +83,10 @@ BEGIN
     IF difference < 0 THEN
         RAISE NEGATIVE_NUMBER_FOUND;
     END IF;
-    
     RETURN difference;
 EXCEPTION
     WHEN NEGATIVE_NUMBER_FOUND THEN
         DBMS_OUTPUT.PUT_LINE('substract: negative number has been found.');
-        
     RETURN -1;
 END;
 /
@@ -99,12 +98,10 @@ BEGIN
     SELECT ced INTO cc FROM
         (SELECT cliente.ced, substract(get_total_profit(cliente.ced), get_total_expenses(cliente.ced)) 
             AS neto FROM cliente ORDER BY neto DESC) WHERE ROWNUM = 1;
-            
     RETURN cc;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
         DBMS_OUTPUT.PUT_LINE('who_spends_less_money: could not find cliente/gasto tuplas relation.');
-        
     RETURN cc;
 END;
 /
@@ -112,5 +109,139 @@ END;
 rem __main__
 BEGIN
     DBMS_OUTPUT.PUT_LINE('who spends less money = ' || who_spends_less_money());
+END;
+/
+
+rem ******* 2 *******
+rem
+                         
+CREATE OR REPLACE FUNCTION who_has_more_jobs
+RETURN NUMBER IS
+    cc NUMBER;
+BEGIN
+    SELECT ced INTO cc FROM 
+        (SELECT cliente.ced, COUNT(nit_empresa) AS jobs FROM cliente INNER JOIN empleo 
+            ON cliente.ced = empleo.ced GROUP BY cliente.ced ORDER BY jobs DESC) WHERE ROWNUM = 1;
+    RETURN cc;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('who_has_more_jobs: could not find cliente/empleo tuplas relation.');
+    RETURN -1;
+END;
+/
+    
+rem __main__
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('who has more jobs = ' || who_has_more_jobs());
+END;
+                         
+
+rem ******* 3 *******
+rem                        
+rem If you call a PLSQL function in a SQL statement it must be schema-level
+rem "create function" or in the package spec. Cannot be private. 
+rem
+
+CREATE OR REPLACE PACKAGE pkg IS
+    FUNCTION who_spends_less_money RETURN NUMBER;
+    FUNCTION who_has_more_jobs RETURN NUMBER;
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY pkg IS
+    --- private
+    FUNCTION get_total_expenses (cliente_cc IN NUMBER) RETURN NUMBER IS
+        total NUMBER;
+    BEGIN
+        total := 0;
+        FOR gasto IN 
+            (SELECT valor_mensual FROM cliente INNER JOIN gasto 
+                ON cliente.ced = gasto.ced WHERE cliente.ced = cliente_cc)
+        LOOP
+            total := total + gasto.valor_mensual;
+        END LOOP;
+        RETURN total;
+    END;
+
+    --- private
+    FUNCTION get_total_profit (cliente_cc IN NUMBER) RETURN NUMBER IS
+        total NUMBER;
+    BEGIN
+        total := 0;
+        FOR empleo IN
+            (SELECT valor_mensual FROM cliente INNER JOIN empleo 
+                ON cliente.ced = empleo.ced WHERE cliente.ced = cliente_cc)
+        LOOP
+                total := total + empleo.valor_mensual;
+        END LOOP;
+        RETURN total;
+    END;
+
+    --- private
+    FUNCTION substract (ingresos IN NUMBER, gastos IN NUMBER) RETURN NUMBER IS
+        NEGATIVE_NUMBER_FOUND EXCEPTION;
+        difference NUMBER;
+    BEGIN
+        difference := ingresos - gastos;
+        IF difference < 0 THEN
+            RAISE NEGATIVE_NUMBER_FOUND;
+        END IF;
+        RETURN difference;
+    EXCEPTION
+        WHEN NEGATIVE_NUMBER_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('substract: negative number has been found.');
+        RETURN -1;
+    END;
+
+    --- public
+    FUNCTION who_spends_less_money RETURN NUMBER IS
+        NEGATIVE_NUMBER_FOUND EXCEPTION;
+
+        cc     NUMBER := -1;
+        actual NUMBER :=  0;
+        bigger NUMBER :=  0;
+    BEGIN
+        FOR cliente in (SELECT ced FROM cliente)
+        LOOP
+            actual := substract(get_total_profit(cliente.ced), get_total_expenses(cliente.ced));
+            IF bigger < actual THEN
+                cc := cliente.ced;
+                bigge := menor;
+            END IF;
+        END LOOP;
+
+        IF bigger < 0 THEN
+            RAISE NEGATIVE_NUMBER_FOUND;
+        END IF;
+
+        RETURN cc;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('who_spends_less_money: could not find cliente/gasto tuplas relation.');
+        WHEN NEGATIVE_NUMBER_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('who_spends_less_money: negative number has been found.');
+        RETURN -1;
+    END;
+
+    --- public
+    FUNCTION who_has_more_jobs RETURN NUMBER IS
+        cc NUMBER;
+    BEGIN
+        SELECT ced INTO cc FROM 
+            (SELECT cliente.ced, COUNT(nit_empresa) AS jobs FROM cliente INNER JOIN empleo 
+                ON cliente.ced = empleo.ced GROUP BY cliente.ced ORDER BY jobs DESC) WHERE ROWNUM = 1;
+        RETURN cc;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('who_has_more_jobs: could not find cliente/empleo tuplas relation.');
+        RETURN -1;
+    END;
+END;
+/
+
+rem _main_
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('who spends less money = ' || pkg.who_spends_less_money());
+    DBMS_OUTPUT.PUT_LINE('who has more jobs = ' || pkg.who_has_more_jobs());
 END;
 /
