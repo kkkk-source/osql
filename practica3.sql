@@ -1,4 +1,4 @@
-rem PRACTICA 3: PROCEDIMIENTOS ALMACENADOS
+rem PRACTICA 3: FUNCIONES Y PAQUETES
 rem
 rem  Cristian Camilo Serna Betancur
 rem     Elver Andres Arroyave
