@@ -143,13 +143,27 @@ END;
 
 rem Business rules
 rem
+rem DRY
+rem
+CREATE OR REPLACE PROCEDURE get_total_income_and_expenses (
+    expenses OUT NUMBER, 
+    income   OUT NUMBER)
+IS
+BEGIN
+    SELECT SUM(valor_mensual) INTO expenses FROM xgasto;
+    SELECT SUM(valor_mensual) INTO income   FROM xempleo;
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('get_total_income_and_expenses: ' || SQLERRM);
+END;
+/
+
 CREATE OR REPLACE TRIGGER insert_rule BEFORE INSERT ON gasto FOR EACH ROW
 DECLARE
     expenses NUMBER;
     income   NUMBER;
 BEGIN
-    SELECT SUM(valor_mensual) INTO expenses FROM xgasto;
-    SELECT SUM(valor_mensual) INTO income   FROM xempleo;
+    get_total_income_and_expenses(expenses, income);
     IF (expenses + :NEW.valor_mensual) > income THEN
         RAISE_APPLICATION_ERROR(-20501, 'rule: no customer can have more expenses than income.');
         -- Ningún cliente puede tener más gastos que ingresos
@@ -162,8 +176,7 @@ DECLARE
     expenses NUMBER;
     income   NUMBER;
 BEGIN
-    SELECT SUM(valor_mensual) INTO expenses FROM xgasto;
-    SELECT SUM(valor_mensual) INTO income   FROM xempleo;
+    get_total_income_and_expenses(expenses, income);
     IF (expenses - :OLD.valor_mensual + :NEW.valor_mensual) > income THEN
         RAISE_APPLICATION_ERROR(-20501, 'rule: no customer can have more expenses than income.');
         -- Ningún cliente puede tener más gastos que ingresos
@@ -176,8 +189,7 @@ DECLARE
     expenses NUMBER;
     income   NUMBER;
 BEGIN
-    SELECT SUM(valor_mensual) INTO expenses FROM xgasto;
-    SELECT SUM(valor_mensual) INTO income   FROM xempleo;
+    get_total_income_and_expenses(expenses, income);
     IF expenses > (income - :OLD.valor_mensual) THEN
         RAISE_APPLICATION_ERROR(-20501, 'rule: no customer can have more expenses than income.');
         -- Ningún cliente puede tener más gastos que ingresos
